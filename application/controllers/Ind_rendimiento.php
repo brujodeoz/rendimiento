@@ -28,14 +28,46 @@ class Ind_rendimiento extends CI_Controller {
 
         $data['totalRegistros'] = $this->Ind_rendimientoModel->totalRegistros($periodo, $aula, $trimestre);
         $materias = $this->Ind_rendimientoModel->getAllMaterias($aula);
-        print_r($data);
+        
+        $total = 0;
+        $row = $this->getValuesByMaterias($data['totalRegistros'], $materias, $total); 
+        $porcentajes = $this->getPercentByMaterias($row, $total);
+        /*print_r($row);
+        print_r($porcentajes);*/
+        echo json_encode($porcentajes);
     }
 
-    public function getValuesByCurse(&$totalRegistros, &$id)
+    public function getValuesByMaterias(&$totalRegistros, &$id, &$total)
     {
+        $row = array(
+                'MATEMATICA' => array('Criticos' => 0, 'Riesgo' => 0),
+                'LENGUA' => array('Criticos' => 0, 'Riesgo' => 0),
+                'CIENCIAS NATURALES' => array('Criticos' => 0, 'Riesgo' => 0),
+                'CIENCIAS SOCIALES' => array('Criticos' => 0, 'Riesgo' => 0)
+            );
+
+        foreach ($totalRegistros as $key => $value) 
+        {
+            $total++;
+            $aux = $value['matplan_ciclo'];            
+            if($value['not_nota'] < 4)                 
+                    $row[$aux]['Criticos'] = $row[$aux]['Criticos'] + 1;                
+            if (($value['not_nota'] >= 4) && ($value['not_nota'] <= 5) )
+                    $row[$aux]['Riesgo'] = $row[$aux]['Riesgo'] + 1;
+        }    
+        return $row;
     }
 
-    public function getPercentByCurse(&$result, $row)
+    public function getPercentByMaterias($row, $total)
     {
+        $row['MATEMATICA']['Criticos'] = round(($row['MATEMATICA']['Criticos'] * 100) / $total, 2 );
+        $row['MATEMATICA']['Riesgo'] = round(($row['MATEMATICA']['Riesgo'] * 100) / $total, 2 );
+        $row['LENGUA']['Criticos'] = round(($row['LENGUA']['Criticos'] * 100) / $total, 2 );
+        $row['LENGUA']['Riesgo'] = round(($row['LENGUA']['Riesgo'] * 100) / $total, 2 );
+        $row['CIENCIAS NATURALES']['Criticos'] = round(($row['CIENCIAS NATURALES']['Criticos'] * 100) / $total, 2 );
+        $row['CIENCIAS NATURALES']['Riesgo'] = round(($row['CIENCIAS NATURALES']['Riesgo'] * 100) / $total, 2 );
+        $row['CIENCIAS SOCIALES']['Criticos'] = round(($row['CIENCIAS SOCIALES']['Criticos'] * 100) / $total, 2 );
+        $row['CIENCIAS SOCIALES']['Riesgo'] = round(($row['CIENCIAS SOCIALES']['Riesgo'] * 100) / $total, 2 );
+        return $row;
     }
 }
