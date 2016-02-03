@@ -119,10 +119,10 @@
 
         $('#generar_grafico').on('click', function() {
 
-            var labels = [];
+            var labels = ['MATEMATICA', 'LENGUA', 'CIENCIAS NATURALES', 'CIENCIAS SOCIALES'];
             var name_of_curse = [];
 
-            if ($('#select_curso').val() === '-') {
+/*            if ($('#select_curso').val() === '-') {
 
                 $("#select_curso option").each(function()
                 {
@@ -130,12 +130,12 @@
                         labels.push($(this).val());
                         name_of_curse.push($(this).text());
                     }
-                });
+                }); 
                 
             } else {
                 name_of_curse.push($("#select_curso option[value='"+$('#select_curso ').val()+"']").text());
                 labels.push('Grado_'+$('#select_curso').val());
-            }
+            }*/
             
             var url=base_url+'/ind_rendimiento/getFilterIndRendimiento';
             var val_periodo_lectivo = [];
@@ -162,34 +162,27 @@
                 success: function(data) {
                     dataValues = data;
                 },
+
                 complete: function() {
                     
                     var data = {
                     labels: labels,
                         datasets: [
                             {
-                                label: "Presente",
+                                label: "Critico",
                                 fillColor: "rgba(52,157,74,0.5)",
                                 strokeColor: "rgba(52,157,74,0.8)",
                                 highlightFill: "rgba(52,157,74,0.75)",
                                 highlightStroke: "rgba(220,220,220,1)",
-                                data: dataValues.Presente
+                                data: dataValues.Criticos
                             },
                             {
-                                label: "Tardanza", 
+                                label: "Riesgo", 
                                 fillColor: "rgba(223,248,8,0.5)",
                                 strokeColor: "rgba(223,248,8,0.8)",
                                 highlightFill: "rgba(223,248,8,0.75)",
                                 highlightStroke: "rgba(151,187,205,1)",
-                                data: dataValues.Tardanza
-                            },
-                            {
-                                label: "Ausente",
-                                fillColor: "rgba(232,8,8,0.5)",
-                                strokeColor: "rgba(232,8,8,0.8)",
-                                highlightFill: "rgba(232,8,8,0.75)",
-                                highlightStroke: "rgba(151,187,205,1)",
-                                data: dataValues.Ausente
+                                data: dataValues.Riesgo
                             }
                         ]
                     };

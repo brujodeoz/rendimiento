@@ -32,9 +32,16 @@ class Ind_rendimiento extends CI_Controller {
         $total = 0;
         $row = $this->getValuesByMaterias($data['totalRegistros'], $materias, $total); 
         $porcentajes = $this->getPercentByMaterias($row, $total);
-        /*print_r($row);
-        print_r($porcentajes);*/
-        echo json_encode($porcentajes);
+/*********************/
+// Queria graficar directamente con $porcentajes, pero se me estaba complicando
+// asi que, por el momento harcodie esta parte
+        $hardcode = array('Criticos' => array(), 'Riesgo' => array());
+            foreach ($porcentajes as $key => $value) {
+                array_push($hardcode['Criticos'], $value['Criticos']);
+                array_push($hardcode['Riesgo'], $value['Riesgo']);
+            }
+/*********************/
+        echo json_encode($hardcode);
     }
 
     public function getValuesByMaterias(&$totalRegistros, &$id, &$total)
