@@ -34,18 +34,20 @@ EOQ;
 		if (!empty($periodo) && $periodo != '-') 
 			$sqlPeriodo = " and extract(year from n.not_fecha_evaluacion) = ".$periodo;
 		if (!empty($aula) && $aula != '-') 
-			$sqlAula = " and i.ofac_id = ".$aula;
+			$sqlAula = " and mat_curso = ".$aula;
 		if (!empty($trimestre) && $trimestre != '-') 
 			$sqlTrimestre = " and te.tipexa_id = ".$trimestre;
 		$sql = <<<EOQ
-select n.not_id, extract(year from n.not_fecha_evaluacion) as periodo, n.not_nota, te.tipexa_descripcion, i.ofac_id, mp.matplan_ciclo
+select n.not_id, extract(year from n.not_fecha_evaluacion) as periodo, n.not_nota, te.tipexa_descripcion, i.ofac_id, mp.matplan_ciclo, m.mat_curso
 from nota n
  join tipo_examenes te on te.tipexa_id = n.tipexa_id 
- join docente_matplan dmp on dmp.docmatplan_id = n.docmatplan_id
- join materia_plan mp on mp.matplan_id = dmp.matplan_id
+  join docente_matplan dmp on dmp.docmatplan_id = n.docmatplan_id
+   join materia_plan mp on mp.matplan_id = dmp.matplan_id
+   join materia m on m.mat_id = mp.mat_id 
  join inscripcion i on i.ins_id = n.ins_id
 where
  mp.matplan_ciclo IN ('LENGUA','MATEMATICA','CIENCIAS NATURALES','CIENCIAS SOCIALES') 
+ and m.mat_nivel = 1
  {$sqlPeriodo}
  {$sqlAula}
  {$sqlTrimestre}
@@ -60,11 +62,12 @@ EOQ;
 	}
 
 /*
-* No tengo en claro de que tabla y con que relaciones sacar los grados
+* No existe una tabla puntual con los Grados, se utiliza la tabla materia 
+* y se toma el campo mat_curso como key / value (id / name)
 */
 	public function getAllClassroom()
 	{		
-		$qsql = "SELECT distinct(ofac_id) as id, concat('Grado_',ofac_id) as name FROM inscripcion order by ofac_id";
+		$qsql = "select mat_curso as id, concat(mat_curso, '° Grado') as name from materia where mat_nivel = 1 and mat_descripcion = 'LENGUA'";
 		return $this->ejecutasql($qsql);
 	}
 /*

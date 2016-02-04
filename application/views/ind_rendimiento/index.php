@@ -53,7 +53,7 @@
                         <div class="form-group">
                             <label for="selectCurse">Grado / Curso: </label>
                             <select class="form-control" id="select_curso">
-                            <option value="-">Todos los cursos</option>
+                            
                                 <?php
                                 foreach ($cursos as $value) {
                                     ?>
