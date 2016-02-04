@@ -31,17 +31,12 @@ class Ind_rendimiento extends CI_Controller {
         
         $total = 0;
         $row = $this->getValuesByMaterias($data['totalRegistros'], $materias, $total); 
-        $porcentajes = $this->getPercentByMaterias($row, $total);
-/*********************/
-// Queria graficar directamente con $porcentajes, pero se me estaba complicando
-// asi que, por el momento harcodie esta parte
-        $hardcode = array('Criticos' => array(), 'Riesgo' => array());
-            foreach ($porcentajes as $key => $value) {
-                array_push($hardcode['Criticos'], $value['Criticos']);
-                array_push($hardcode['Riesgo'], $value['Riesgo']);
-            }
-/*********************/
-        echo json_encode($hardcode);
+        $result = array(
+            'Criticos' => array(),
+            'Riesgo' => array()
+            );
+        $this->getPercentByMaterias($row, $total, $result);
+        echo json_encode($result);
     }
 
     public function getValuesByMaterias(&$totalRegistros, &$id, &$total)
@@ -65,16 +60,11 @@ class Ind_rendimiento extends CI_Controller {
         return $row;
     }
 
-    public function getPercentByMaterias($row, $total)
+    public function getPercentByMaterias($row, $total, &$result)
     {
-        $row['MATEMATICA']['Criticos'] = round(($row['MATEMATICA']['Criticos'] * 100) / $total, 2 );
-        $row['MATEMATICA']['Riesgo'] = round(($row['MATEMATICA']['Riesgo'] * 100) / $total, 2 );
-        $row['LENGUA']['Criticos'] = round(($row['LENGUA']['Criticos'] * 100) / $total, 2 );
-        $row['LENGUA']['Riesgo'] = round(($row['LENGUA']['Riesgo'] * 100) / $total, 2 );
-        $row['CIENCIAS NATURALES']['Criticos'] = round(($row['CIENCIAS NATURALES']['Criticos'] * 100) / $total, 2 );
-        $row['CIENCIAS NATURALES']['Riesgo'] = round(($row['CIENCIAS NATURALES']['Riesgo'] * 100) / $total, 2 );
-        $row['CIENCIAS SOCIALES']['Criticos'] = round(($row['CIENCIAS SOCIALES']['Criticos'] * 100) / $total, 2 );
-        $row['CIENCIAS SOCIALES']['Riesgo'] = round(($row['CIENCIAS SOCIALES']['Riesgo'] * 100) / $total, 2 );
-        return $row;
+        foreach ($row as $key => $value) {
+            array_push($result['Criticos'], round(($value['Criticos'] * 100) / $total, 2));
+            array_push($result['Riesgo'], round(($value['Riesgo'] * 100) / $total, 2));
+        }
     }
 }
