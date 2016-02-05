@@ -35,6 +35,7 @@ class Ind_rendimiento extends CI_Controller {
             'Criticos' => array(),
             'Riesgo' => array()
             );
+        
         $this->getPercentByMaterias($row, $total, $result);
         echo json_encode($result);
     }
@@ -51,7 +52,7 @@ class Ind_rendimiento extends CI_Controller {
         foreach ($totalRegistros as $key => $value) 
         {
             $total++;
-            $aux = $value['matplan_ciclo'];            
+            $aux = $value['mat_descripcion'];            
             if($value['not_nota'] < 4)                 
                     $row[$aux]['Criticos'] = $row[$aux]['Criticos'] + 1;                
             if (($value['not_nota'] >= 4) && ($value['not_nota'] <= 5) )

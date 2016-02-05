@@ -32,13 +32,13 @@ EOQ;
 		$sqlTrimestre = "";
 
 		if (!empty($periodo) && $periodo != '-') 
-			$sqlPeriodo = " and extract(year from n.not_fecha_evaluacion) = ".$periodo;
+			$sqlPeriodo = " and i.ins_per_lectivo = ".$periodo;
 		if (!empty($aula) && $aula != '-') 
-			$sqlAula = " and mat_curso = ".$aula;
+			$sqlAula = " and m.mat_curso = ".$aula;
 		if (!empty($trimestre) && $trimestre != '-') 
 			$sqlTrimestre = " and te.tipexa_id = ".$trimestre;
 		$sql = <<<EOQ
-select n.not_id, extract(year from n.not_fecha_evaluacion) as periodo, n.not_nota, te.tipexa_descripcion, i.ofac_id, mp.matplan_ciclo, m.mat_curso
+select n.not_id, i.ins_per_lectivo as periodo, n.not_nota, te.tipexa_descripcion, m.mat_descripcion, m.mat_curso
 from nota n
  join tipo_examenes te on te.tipexa_id = n.tipexa_id 
   join docente_matplan dmp on dmp.docmatplan_id = n.docmatplan_id
@@ -46,7 +46,7 @@ from nota n
    join materia m on m.mat_id = mp.mat_id 
  join inscripcion i on i.ins_id = n.ins_id
 where
- mp.matplan_ciclo IN ('LENGUA','MATEMATICA','CIENCIAS NATURALES','CIENCIAS SOCIALES') 
+ m.mat_descripcion IN ('LENGUA','MATEMATICA','CIENCIAS NATURALES','CIENCIAS SOCIALES') 
  and m.mat_nivel = 1
  {$sqlPeriodo}
  {$sqlAula}
@@ -67,7 +67,7 @@ EOQ;
 */
 	public function getAllClassroom()
 	{		
-		$qsql = "select mat_curso as id, concat(mat_curso, '° Grado') as name from materia where mat_nivel = 1 and mat_descripcion = 'LENGUA'";
+		$qsql = "select cur_id as id, concat(cur_descripcion,' Grado') as name from cursos where cur_nivel=1";
 		return $this->ejecutasql($qsql);
 	}
 /*
