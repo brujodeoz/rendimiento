@@ -17,10 +17,11 @@ Class Ind_rendimientoModel extends CI_Model
 	{
 		$sqlCurso = "and mat_curso = ".$curso;
 		$qsql = <<<EOQ
-select mat_id as id, mat_descripcion as name from materia 
+select mat_descripcion as name from materia 
 where mat_descripcion in ('LENGUA','MATEMATICA','CIENCIAS NATURALES','CIENCIAS SOCIALES') 
 and mat_nivel = 1
 {$sqlCurso}
+order by mat_descripcion desc
 EOQ;
 		return $this->ejecutasql($qsql);
 	}
@@ -51,6 +52,7 @@ where
  {$sqlPeriodo}
  {$sqlAula}
  {$sqlTrimestre}
+ order by m.mat_descripcion desc
 EOQ;
 		return $this->ejecutasql($sql);
 	}
@@ -61,10 +63,7 @@ EOQ;
 		return $this->ejecutasql($qsql);
 	}
 
-/*
-* No existe una tabla puntual con los Grados, se utiliza la tabla materia 
-* y se toma el campo mat_curso como key / value (id / name)
-*/
+
 	public function getAllClassroom()
 	{		
 		$qsql = "select cur_id as id, concat(cur_descripcion,' Grado') as name from cursos where cur_nivel=1";
@@ -78,4 +77,5 @@ EOQ;
 		$qsql = "select tipexa_id as id, tipexa_descripcion as name from tipo_examenes where tipexa_descripcion in ('3° TRIMESTRE','2° TRIMESTRE','1° TRIMESTRE')";
 		return $this->ejecutasql($qsql);		
 	}
+
 }

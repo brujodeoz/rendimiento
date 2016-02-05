@@ -119,7 +119,7 @@
 
         $('#generar_grafico').on('click', function() {
 
-            var labels = ['MATEMATICA', 'LENGUA', 'CIENCIAS NATURALES', 'CIENCIAS SOCIALES'];
+            var labels = [];
             var name_of_curse = [];
 
 /*            if ($('#select_curso').val() === '-') {
@@ -166,7 +166,7 @@
                 complete: function() {
                     
                     var data = {
-                    labels: labels,
+                    labels: dataValues.Materias,
                         datasets: [
                             {
                                 label: "Critico",

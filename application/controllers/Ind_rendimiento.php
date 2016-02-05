@@ -32,40 +32,53 @@ class Ind_rendimiento extends CI_Controller {
         $total = 0;
         $row = $this->getValuesByMaterias($data['totalRegistros'], $materias, $total); 
         $result = array(
+            'Materias' => array(),
             'Criticos' => array(),
             'Riesgo' => array()
             );
         
-        $this->getPercentByMaterias($row, $total, $result);
+        $this->getPercentByMaterias($row, $total, $result, $materias);
         echo json_encode($result);
     }
 
-    public function getValuesByMaterias(&$totalRegistros, &$id, &$total)
-    {
-        $row = array(
-                'MATEMATICA' => array('Criticos' => 0, 'Riesgo' => 0),
-                'LENGUA' => array('Criticos' => 0, 'Riesgo' => 0),
-                'CIENCIAS NATURALES' => array('Criticos' => 0, 'Riesgo' => 0),
-                'CIENCIAS SOCIALES' => array('Criticos' => 0, 'Riesgo' => 0)
-            );
+/*
+* Crea un array multidimensional que contiene la cantidad de notas Critica y en Riesgo 
+* de cada materia.
+*
+* MATERIA1  => CRITICOS = x
+*           => RIESGO = y
+* MATERIA2  => CRITICOS = x
+*           => RIESGO = y
+*/
+    public function getValuesByMaterias($totalRegistros, $materias, &$total)
+    {        
+        $cantidadrendimiento = array();
+        foreach ($materias as $key => $value) 
+            $cantidadrendimiento[$value['name']] = array('Criticos' => 0, 'Riesgo' => 0);
 
         foreach ($totalRegistros as $key => $value) 
         {
             $total++;
-            $aux = $value['mat_descripcion'];            
-            if($value['not_nota'] < 4)                 
-                    $row[$aux]['Criticos'] = $row[$aux]['Criticos'] + 1;                
+            $aux = $value['mat_descripcion']; 
+            if($value['not_nota'] < 4) 
+                    $cantidadrendimiento[$aux]['Criticos'] = $cantidadrendimiento[$aux]['Criticos'] + 1;
             if (($value['not_nota'] >= 4) && ($value['not_nota'] <= 5) )
-                    $row[$aux]['Riesgo'] = $row[$aux]['Riesgo'] + 1;
-        }    
-        return $row;
+                    $cantidadrendimiento[$aux]['Riesgo'] = $cantidadrendimiento[$aux]['Riesgo'] + 1;
+        } 
+        return $cantidadrendimiento;
     }
-
-    public function getPercentByMaterias($row, $total, &$result)
+/*
+* Cargo el arreglo $result, con los porcentajes a graficar junto con los nombres
+* de las materias. Este array es devuelto con JSON para facilitar la lectura
+* en el index.php (encargado de graficar)
+*/
+    public function getPercentByMaterias($row, $total, &$result, $materias)
     {
         foreach ($row as $key => $value) {
             array_push($result['Criticos'], round(($value['Criticos'] * 100) / $total, 2));
             array_push($result['Riesgo'], round(($value['Riesgo'] * 100) / $total, 2));
-        }
+        }        
+        foreach ($materias as $key => $value) 
+            array_push($result['Materias'], $value['name']);        
     }
 }
