@@ -13,20 +13,21 @@ Class Ind_rendimientoModel extends CI_Model
 		return (count($data) < 1 ? array() : $data);
 	}
 
-	public function getAllMaterias($curso)
+	public function getAllMaterias($curso, $nivel)
 	{
 		$sqlCurso = "and mat_curso = ".$curso;
+		$sqlNivel = "and mat_nivel = ".$nivel;
 		$qsql = <<<EOQ
 select mat_descripcion as name from materia 
-where mat_descripcion in ('LENGUA','MATEMATICA','CIENCIAS NATURALES','CIENCIAS SOCIALES') 
-and mat_nivel = 1
+where 1=1 
+{$sqlNivel}
 {$sqlCurso}
 order by mat_descripcion desc
 EOQ;
 		return $this->ejecutasql($qsql);
 	}
 	
-	public function totalRegistros($periodo, $aula, $trimestre)
+	public function totalRegistros($periodo, $aula, $trimestre, $nivel)
 	{		
 		$sqlPeriodo = "";
 		$sqlAula = "";
@@ -38,6 +39,7 @@ EOQ;
 			$sqlAula = " and m.mat_curso = ".$aula;
 		if (!empty($trimestre) && $trimestre != '-') 
 			$sqlTrimestre = " and te.tipexa_id = ".$trimestre;
+		$sqlNivel = " and m.mat_nivel = ".$nivel;
 		$sql = <<<EOQ
 select n.not_id, i.ins_per_lectivo as periodo, n.not_nota, te.tipexa_descripcion, m.mat_descripcion, m.mat_curso
 from nota n
@@ -46,9 +48,8 @@ from nota n
    join materia_plan mp on mp.matplan_id = dmp.matplan_id
    join materia m on m.mat_id = mp.mat_id 
  join inscripcion i on i.ins_id = n.ins_id
-where
- m.mat_descripcion IN ('LENGUA','MATEMATICA','CIENCIAS NATURALES','CIENCIAS SOCIALES') 
- and m.mat_nivel = 1
+where 1=1 
+ {$sqlNivel}
  {$sqlPeriodo}
  {$sqlAula}
  {$sqlTrimestre}
@@ -63,18 +64,20 @@ EOQ;
 		return $this->ejecutasql($qsql);
 	}
 
-
-	public function getAllClassroom()
+	public function getAllClassroom($nivel)
 	{		
-		$qsql = "select cur_id as id, concat(cur_descripcion,' Grado') as name from cursos where cur_nivel=1";
+		$qsqlNivel = " cur_nivel= ".$nivel;
+		$qsql = <<<EOQ
+select cur_id as id, concat(cur_descripcion,' Grado') as name from cursos 
+where  {$qsqlNivel}
+order by cur_descripcion
+EOQ;
 		return $this->ejecutasql($qsql);
 	}
-/*
-* En la tabla "tipo_examenes" tuve que modificar los caracteres "°" 
-*/
+	
 	public function getAllTrimestres()
 	{
-		$qsql = "select tipexa_id as id, tipexa_descripcion as name from tipo_examenes where tipexa_descripcion in ('3° TRIMESTRE','2° TRIMESTRE','1° TRIMESTRE')";
+		$qsql = "select tipexa_id as id, tipexa_descripcion as name from tipo_examenes where tipexa_descripcion in ('3º TRIMESTRE','2º TRIMESTRE','1º TRIMESTRE') order by tipexa_descripcion";
 		return $this->ejecutasql($qsql);		
 	}
 

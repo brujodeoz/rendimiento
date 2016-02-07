@@ -10,11 +10,13 @@ class Ind_rendimiento extends CI_Controller {
         $this->load->helper('url');
     }
 
-    function index()
+    function index($nivel = 1)
     {
         $data = array();
+        if($nivel == 1) $data['titulo'] = "Nivel Primario";
+        if($nivel == 2) $data['titulo'] = "Nivel Secundario";        
         $data['periodos'] = $this->Ind_rendimientoModel->getAllPeriods(); 
-        $data['cursos'] = $this->Ind_rendimientoModel->getAllClassroom(); 
+        $data['cursos'] = $this->Ind_rendimientoModel->getAllClassroom($nivel = 1); 
         $data['trimestres'] = $this->Ind_rendimientoModel->getAllTrimestres(); 
         
         $this->load->view('/ind_rendimiento/index.php', $data);
@@ -25,19 +27,20 @@ class Ind_rendimiento extends CI_Controller {
         $periodo=$_POST['periodo_lectivo'];
         $aula=$_POST['curso'];
         $trimestre=$_POST['trimestre'];
+        //$nivel=$_POST['nivel'];
 
-        $data['totalRegistros'] = $this->Ind_rendimientoModel->totalRegistros($periodo, $aula, $trimestre);
-        $materias = $this->Ind_rendimientoModel->getAllMaterias($aula);
-        
-        $total = 0;
+        $data['totalRegistros'] = $this->Ind_rendimientoModel->totalRegistros($periodo, $aula, $trimestre, $nivel = 1);
+        $materias = $this->Ind_rendimientoModel->getAllMaterias($aula, $nivel = 1);
+        $total = 0; 
         $row = $this->getValuesByMaterias($data['totalRegistros'], $materias, $total); 
+
         $result = array(
             'Materias' => array(),
             'Criticos' => array(),
             'Riesgo' => array()
             );
         
-        $this->getPercentByMaterias($row, $total, $result, $materias);
+        $this->getPercentByMaterias($row, $total, $result);
         echo json_encode($result);
     }
 
@@ -65,20 +68,40 @@ class Ind_rendimiento extends CI_Controller {
             if (($value['not_nota'] >= 4) && ($value['not_nota'] <= 5) )
                     $cantidadrendimiento[$aux]['Riesgo'] = $cantidadrendimiento[$aux]['Riesgo'] + 1;
         } 
-        return $cantidadrendimiento;
+        return $this->filtroMaterias($cantidadrendimiento, $total);
     }
 /*
 * Cargo el arreglo $result, con los porcentajes a graficar junto con los nombres
 * de las materias. Este array es devuelto con JSON para facilitar la lectura
 * en el index.php (encargado de graficar)
 */
-    public function getPercentByMaterias($row, $total, &$result, $materias)
+    public function getPercentByMaterias($row, $total, &$result)
     {
-        foreach ($row as $key => $value) {
+        foreach ($row as $key => $value) 
+        {
             array_push($result['Criticos'], round(($value['Criticos'] * 100) / $total, 2));
             array_push($result['Riesgo'], round(($value['Riesgo'] * 100) / $total, 2));
-        }        
-        foreach ($materias as $key => $value) 
-            array_push($result['Materias'], $value['name']);        
+            array_push($result['Materias'], $key);
+        }    
+    }
+
+/*
+* Funcion encargada de filtar las materias que seran graficadas, en caso del nivel primario 
+* no requiere ningun calculo (se especifican implicitamente en la documentacion de requermientos),
+* no asi para el nivel secundario. Tambien se descartan las materias que no contienen valores (criticos/riesgo)
+*/
+    private function filtroMaterias($row)
+    {
+        $aux = array();        
+        foreach ($row as $key => $value) 
+            if($key == 'LENGUA' || $key == 'MATEMATICA' || $key == 'CIENCIAS NATURALES' || $key == 'CIENCIAS SOCIALES') 
+            {
+                if(($value['Criticos']+$value['Riesgo']) > 0 )
+                {
+                    $aux[$key]['Criticos'] = $value['Criticos'];
+                    $aux[$key]['Riesgo'] = $value['Riesgo'];
+                }
+            }
+        return $aux;
     }
 }

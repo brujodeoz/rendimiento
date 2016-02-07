@@ -29,7 +29,7 @@
 <body>
 <div class="row">
     <div class="col-md-12">
-        <h3>Módulo Indicador de Rendimiento Escolar </h3>
+        <h3>Módulo Indicador de Rendimiento Escolar - <?php echo $titulo?></h3>
     </div>
 </div>
 
