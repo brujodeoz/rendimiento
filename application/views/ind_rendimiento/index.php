@@ -75,6 +75,7 @@
                                 ?>
                             </select>
                         </div>
+                        <input type="hidden" value="<?php echo $nivel; ?>" id="select_nivel">
                         <div class="form-group">
                             <button id="generar_grafico" class="btn btn-default">Generar Gr&aacute;fico</button>
 
@@ -146,7 +147,7 @@
             dataFilter.periodo_lectivo = $('#select_periodo_lectivo').val(); 
             dataFilter.trimestre       = $('#select_trimestre').val(); 
             dataFilter.curso           = $('#select_curso').val(); 
-
+            dataFilter.nivel           = $('#select_nivel').val();
             var dataValues = {};
 
             $.ajax({

@@ -13,10 +13,11 @@ class Ind_rendimiento extends CI_Controller {
     function index($nivel = 1)
     {
         $data = array();
+        $data['nivel'] = $nivel;
         if($nivel == 1) $data['titulo'] = "Nivel Primario";
-        if($nivel == 2) $data['titulo'] = "Nivel Secundario";        
+        if($nivel == 2) $data['titulo'] = "Nivel Secundario";
         $data['periodos'] = $this->Ind_rendimientoModel->getAllPeriods(); 
-        $data['cursos'] = $this->Ind_rendimientoModel->getAllClassroom($nivel = 1); 
+        $data['cursos'] = $this->Ind_rendimientoModel->getAllClassroom($nivel); 
         $data['trimestres'] = $this->Ind_rendimientoModel->getAllTrimestres(); 
         
         $this->load->view('/ind_rendimiento/index.php', $data);
@@ -27,12 +28,12 @@ class Ind_rendimiento extends CI_Controller {
         $periodo=$_POST['periodo_lectivo'];
         $aula=$_POST['curso'];
         $trimestre=$_POST['trimestre'];
-        //$nivel=$_POST['nivel'];
+        $nivel=$_POST['nivel'];
 
-        $data['totalRegistros'] = $this->Ind_rendimientoModel->totalRegistros($periodo, $aula, $trimestre, $nivel = 1);
-        $materias = $this->Ind_rendimientoModel->getAllMaterias($aula, $nivel = 1);
+        $data['totalRegistros'] = $this->Ind_rendimientoModel->totalRegistros($periodo, $aula, $trimestre, $nivel);
+        $materias = $this->Ind_rendimientoModel->getAllMaterias($aula, $nivel);
         $total = 0; 
-        $row = $this->getValuesByMaterias($data['totalRegistros'], $materias, $total, $nivel = 1); 
+        $row = $this->getValuesByMaterias($data['totalRegistros'], $materias, $total, $nivel);
 
         $result = array(
             'Materias' => array(),
@@ -68,7 +69,7 @@ class Ind_rendimiento extends CI_Controller {
             if (($value['not_nota'] >= 4) && ($value['not_nota'] <= 5) )
                     $cantidadrendimiento[$aux]['Riesgo'] = $cantidadrendimiento[$aux]['Riesgo'] + 1;
         } 
-        return $this->filtroMaterias($cantidadrendimiento, $nivel = 1);
+        return $this->filtroMaterias($cantidadrendimiento, $nivel);
     }
 /*
 * Cargo el arreglo $result, con los porcentajes a graficar junto con los nombres
@@ -79,14 +80,16 @@ class Ind_rendimiento extends CI_Controller {
     {
         foreach ($row as $key => $value) 
         {
+            if ($total <= 0 ) break;
             array_push($result['Criticos'], round(($value['Criticos'] * 100) / $total, 2));
             array_push($result['Riesgo'], round(($value['Riesgo'] * 100) / $total, 2));
             array_push($result['Materias'], $key);
         }    
     }
 
-    private function artificio($row, &$i)
+    private function artificio($row)    
     {
+        $i = 0;
         $tmpaux = array();
         foreach ($row as $key => $value) 
         {
@@ -96,8 +99,9 @@ class Ind_rendimiento extends CI_Controller {
         }
         return $tmpaux;
     }
-    private function ordenarvector($tmpaux, $i)
+    private function ordenarvector($tmpaux)
     {
+        $i = count($tmpaux);
         for ($k = 0; $k <= $i-1 ; $k++) 
         { 
             for($j = 0; $j < $i-1; $j++)
@@ -123,7 +127,7 @@ class Ind_rendimiento extends CI_Controller {
     private function filtroMaterias($row, $nivel)
     {
         $aux = array();
-        if($nivel == 2)
+        if($nivel == 1)
         {
             foreach ($row as $key => $value) 
                 if($key == 'LENGUA' || $key == 'MATEMATICA' || $key == 'CIENCIAS NATURALES' || $key == 'CIENCIAS SOCIALES') 
@@ -134,24 +138,22 @@ class Ind_rendimiento extends CI_Controller {
                         $aux[$key]['Riesgo'] = $value['Riesgo'];
                     }
                 }
-        } else if($nivel == 1) 
+        } else if($nivel == 2) 
         {
-            $i = 0;
-            $vecNormal = $this->artificio($row, $i);
-            $vecNormal = $this->ordenarvector($vecNormal, $i);
-            $devolver = array();
+            $vecNormal = $this->artificio($row);
+            $vecNormal = $this->ordenarvector($vecNormal);
             $k = 0;
             foreach ($vecNormal as $value) 
             {
-                $devolver[$value['materia']] = array('Criticos' => 0, 'Riesgo' => 0);                
+                $aux[$value['materia']] = array('Criticos' => 0, 'Riesgo' => 0);
                 if (++$k >= 5) break;
             }
-            foreach ($devolver as $key => $value) 
+            foreach ($aux as $key => $value) 
             {
-                $devolver[$key]['Criticos'] = $row[$key]['Criticos'];
-                $devolver[$key]['Riesgo'] = $row[$key]['Riesgo'];
+                    $aux[$key]['Criticos'] = $row[$key]['Criticos'];
+                    $aux[$key]['Riesgo'] = $row[$key]['Riesgo'];
             }
         }
-        return $devolver;
+        return $aux;
     }
 }

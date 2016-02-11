@@ -66,9 +66,11 @@ EOQ;
 
 	public function getAllClassroom($nivel)
 	{		
+		if($nivel == 1) $etiqueta = " Grado";
+		if($nivel == 2) $etiqueta = " Curso";
 		$qsqlNivel = " cur_nivel= ".$nivel;
 		$qsql = <<<EOQ
-select cur_id as id, concat(cur_descripcion,' Grado') as name from cursos 
+select cur_id as id, concat(cur_descripcion,'{$etiqueta}') as name from cursos 
 where  {$qsqlNivel}
 order by cur_descripcion
 EOQ;
