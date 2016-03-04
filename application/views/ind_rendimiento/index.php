@@ -51,7 +51,7 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="selectCurse">Grado / Curso: </label>
+                            <label for="selectCurse"> <?php echo $item?>: </label>
                             <select class="form-control" id="select_curso">
                             
                                 <?php

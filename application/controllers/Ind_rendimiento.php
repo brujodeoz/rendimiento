@@ -14,10 +14,8 @@ class Ind_rendimiento extends CI_Controller {
     {
         $data = array();
         $data['nivel'] = $nivel;
-        if($nivel == 1) $data['titulo'] = "Nivel Primario";
-        if($nivel == 2) $data['titulo'] = "Nivel Secundario";
+        $this->generaEtiquetas($data, $nivel);
         $data['periodos'] = $this->Ind_rendimientoModel->getAllPeriods(); 
-        $data['cursos'] = $this->Ind_rendimientoModel->getAllClassroom($nivel); 
         $data['trimestres'] = $this->Ind_rendimientoModel->getAllTrimestres(); 
         
         $this->load->view('/ind_rendimiento/index.php', $data);
@@ -26,14 +24,14 @@ class Ind_rendimiento extends CI_Controller {
     public function getFilterIndRendimiento()
     {
         $periodo=$_POST['periodo_lectivo'];
-        $aula=$_POST['curso'];
+        $aula=$_POST['curso']; // realmente es un item
         $trimestre=$_POST['trimestre'];
         $nivel=$_POST['nivel'];
 
         $data['totalRegistros'] = $this->Ind_rendimientoModel->totalRegistros($periodo, $aula, $trimestre, $nivel);
         $materias = $this->Ind_rendimientoModel->getAllMaterias($aula, $nivel);
         $total = 0; 
-        $row = $this->getValuesByMaterias($data['totalRegistros'], $materias, $total, $nivel);
+        $RegValuesGraph = $this->getValuesByMaterias($data['totalRegistros'], $materias, $total, $nivel);
 
         $result = array(
             'Materias' => array(),
@@ -41,44 +39,52 @@ class Ind_rendimiento extends CI_Controller {
             'Riesgo' => array()
             );
         
-        $this->getPercentByMaterias($row, $total, $result);
+        $this->getPercentByMaterias($RegValuesGraph, $total, $result);
         echo json_encode($result);
     }
 
-/*
-* Crea un array multidimensional que contiene la cantidad de notas Critica y en Riesgo 
-* de cada materia.
-*
-* MATERIA1  => CRITICOS = x
-*           => RIESGO = y
-* MATERIA2  => CRITICOS = x
-*           => RIESGO = y
-*/
     public function getValuesByMaterias($totalRegistros, $materias, &$total, $nivel)
     {        
-        $cantidadrendimiento = array();
-        foreach ($materias as $key => $value) 
-            $cantidadrendimiento[$value['name']] = array('Criticos' => 0, 'Riesgo' => 0);
+/*
+* Crea un array multidimensional que contiene la cantidad de notas Criticas, en Riesgo 
+* y un Promedio de cada materia.
+* Promedio se utiliza en caso del nivel secundario para mostrar los peores 5 rendimientos
+* ID_MATERIA1   => CRITICOS = x
+*               => RIESGO = y
+*               => PROMEDIO = z
+*               => MATERIA = NOMBRE_MATERIA
+* 
+*/
+        $RendimientoMaterias = array();
+        foreach ($materias as $key => $value) // Defino el arreglo multidimiensional
+            $RendimientoMaterias[$value['id']] = array('Materia'=>"vacio", 'Criticos'=>0, 'Riesgo'=>0, 'Promedio'=>0);
 
         foreach ($totalRegistros as $key => $value) 
         {
             $total++;
-            $aux = $value['mat_descripcion']; 
+            $mat_id = $value['mat_id']; 
+            if($value['not_nota'] <= 5)
+                    $RendimientoMaterias[$mat_id]['Materia'] = $value['mat_descripcion'];
             if($value['not_nota'] < 4) 
-                    $cantidadrendimiento[$aux]['Criticos'] = $cantidadrendimiento[$aux]['Criticos'] + 1;
+                    $RendimientoMaterias[$mat_id]['Criticos'] = $RendimientoMaterias[$mat_id]['Criticos'] + 1;
             if (($value['not_nota'] >= 4) && ($value['not_nota'] <= 5) )
-                    $cantidadrendimiento[$aux]['Riesgo'] = $cantidadrendimiento[$aux]['Riesgo'] + 1;
+                    $RendimientoMaterias[$mat_id]['Riesgo'] = $RendimientoMaterias[$mat_id]['Riesgo'] + 1;
         } 
-        return $this->filtroMaterias($cantidadrendimiento, $nivel);
+        foreach ($RendimientoMaterias as $key => $value) 
+        {
+            $RendimientoMaterias[$key]['Promedio'] = ($value['Riesgo'] + $value['Criticos'])/2;
+        }
+        $temporal = $this->filtroMaterias($RendimientoMaterias, $nivel);
+        return $temporal;
     }
 /*
 * Cargo el arreglo $result, con los porcentajes a graficar junto con los nombres
 * de las materias. Este array es devuelto con JSON para facilitar la lectura
 * en el index.php (encargado de graficar)
 */
-    public function getPercentByMaterias($row, $total, &$result)
+    public function getPercentByMaterias($RegValuesGraph, $total, &$result)
     {
-        foreach ($row as $key => $value) 
+        foreach ($RegValuesGraph as $key => $value) 
         {
             if ($total <= 0 ) break;
             array_push($result['Criticos'], round(($value['Criticos'] * 100) / $total, 2));
@@ -87,73 +93,62 @@ class Ind_rendimiento extends CI_Controller {
         }    
     }
 
-    private function artificio($row)    
+
+    private function filtroMaterias($RendimientoMaterias, $nivel)
     {
-        $i = 0;
-        $tmpaux = array();
-        foreach ($row as $key => $value) 
-        {
-            $tmpaux[$i]['materia'] = $key;
-            $tmpaux[$i]['nota'] = $value['Criticos'] + $value['Riesgo'];
-            $i++;
-        }
-        return $tmpaux;
-    }
-    private function ordenarvector($tmpaux)
-    {
-        $i = count($tmpaux);
-        for ($k = 0; $k <= $i-1 ; $k++) 
-        { 
-            for($j = 0; $j < $i-1; $j++)
-            {
-                if($tmpaux[$j]['nota'] < $tmpaux[$j+1]['nota'])
-                {
-                    $aux1 = $tmpaux[$j]['materia'];
-                    $aux2 = $tmpaux[$j]['nota'];
-                    $tmpaux[$j]['materia'] = $tmpaux[$j+1]['materia'];
-                    $tmpaux[$j]['nota'] = $tmpaux[$j+1]['nota'];
-                    $tmpaux[$j+1]['materia'] = $aux1;
-                    $tmpaux[$j+1]['nota'] = $aux2;
-                }
-            }
-        }
-        return $tmpaux;
-    }    
 /*
 * Funcion encargada de filtar las materias que seran graficadas, en caso del nivel primario 
 * no requiere ningun calculo (se especifican implicitamente en la documentacion de requermientos),
-* no asi para el nivel secundario. Tambien se descartan las materias que no contienen valores (criticos/riesgo)
+* no asi para el nivel secundario. 
+* Tambien se descartan las materias que no contienen valores (criticos/riesgo)
 */
-    private function filtroMaterias($row, $nivel)
-    {
         $aux = array();
-        if($nivel == 1)
+        if($nivel == 2)
+            $materiasporfiltrar = array('LENGUA', 'MATEMATICA', 'CIENCIAS NATURALES', 'CIENCIAS SOCIALES');
+        else if($nivel == 1)
         {
-            foreach ($row as $key => $value) 
-                if($key == 'LENGUA' || $key == 'MATEMATICA' || $key == 'CIENCIAS NATURALES' || $key == 'CIENCIAS SOCIALES') 
-                {
-                    if(($value['Criticos']+$value['Riesgo']) > 0 )
-                    {
-                        $aux[$key]['Criticos'] = $value['Criticos'];
-                        $aux[$key]['Riesgo'] = $value['Riesgo'];
-                    }
-                }
-        } else if($nivel == 2) 
-        {
-            $vecNormal = $this->artificio($row);
-            $vecNormal = $this->ordenarvector($vecNormal);
-            $k = 0;
-            foreach ($vecNormal as $value) 
+            foreach ($RendimientoMaterias as $key => $value) 
             {
-                $aux[$value['materia']] = array('Criticos' => 0, 'Riesgo' => 0);
-                if (++$k >= 5) break;
+                $vecPromedio[$key] = $value['Promedio'];
+                $materiasporfiltrar[$key] = $value['Materia'];
             }
-            foreach ($aux as $key => $value) 
-            {
-                    $aux[$key]['Criticos'] = $row[$key]['Criticos'];
-                    $aux[$key]['Riesgo'] = $row[$key]['Riesgo'];
-            }
+            array_multisort($vecPromedio, SORT_DESC, $materiasporfiltrar);
+            array_splice($materiasporfiltrar, 5);
         }
+        foreach ($RendimientoMaterias as $key => $value) 
+            if(in_array($value['Materia'], $materiasporfiltrar))
+            {
+                if(($value['Promedio']) > 0 ) // segun requerimientos, no muestra valores en cero
+                {
+                    $aux[$value['Materia']]['Criticos'] = $value['Criticos']?$value['Criticos']:0;
+                    $aux[$value['Materia']]['Riesgo'] = $value['Riesgo']?$value['Riesgo']:0;
+                }
+            }
         return $aux;
+    }
+
+    public function generaEtiquetas(&$data, $nivel)
+    {
+        switch ($nivel) {
+            case 1:
+                $data['titulo'] = "Nivel Primario";
+                $data['item'] = "Grado";
+                $data['cursos'] = $this->Ind_rendimientoModel->getAllClassroom($nivel);
+                break;
+            case 2:
+                $data['titulo'] = "Nivel Secundario";                
+                $data['item'] = "Curso";
+                $data['cursos'] = $this->Ind_rendimientoModel->getAllClassroom($nivel);
+                break;
+            case 3:
+                $data['titulo'] = "Supervisor - Nivel Primario";
+                $data['item'] = "Establecimiento";                
+                $data['cursos'] = $this->Ind_rendimientoModel->getAllEstablecimientos();
+                break;
+            
+            default:
+                # code...
+                break;
+        }
     }
 }

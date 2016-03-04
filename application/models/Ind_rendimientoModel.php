@@ -15,10 +15,18 @@ Class Ind_rendimientoModel extends CI_Model
 
 	public function getAllMaterias($curso, $nivel)
 	{
+		if($nivel == 3)
+		{
+		$sqlCurso = "";
+		$sqlNivel = "and mat_nivel = 1";
+		}
+		else
+		{
 		$sqlCurso = "and mat_curso = ".$curso;
 		$sqlNivel = "and mat_nivel = ".$nivel;
+		}
 		$qsql = <<<EOQ
-select mat_descripcion as name from materia 
+select mat_id as id, mat_descripcion as name from materia 
 where 1=1 
 {$sqlNivel}
 {$sqlCurso}
@@ -27,32 +35,46 @@ EOQ;
 		return $this->ejecutasql($qsql);
 	}
 	
-	public function totalRegistros($periodo, $aula, $trimestre, $nivel)
+	public function totalRegistros($periodo, $item, $trimestre, $nivel)
 	{		
 		$sqlPeriodo = "";
-		$sqlAula = "";
+		$sqlItem = "";
 		$sqlTrimestre = "";
 
 		if (!empty($periodo) && $periodo != '-') 
 			$sqlPeriodo = " and i.ins_per_lectivo = ".$periodo;
-		if (!empty($aula) && $aula != '-') 
-			$sqlAula = " and m.mat_curso = ".$aula;
+
+		if (($nivel == 1)||($nivel == 2))
+			if (!empty($item) && $item != '-') 
+				$sqlItem = " and m.mat_curso = ".$item;
+			if ($nivel == 3)
+				/*if (!empty($item) && $item != '-') */
+				{
+					$sqlItem = "  and e.est_id = ".$item;
+					$nivel = 1; 
+				}
+
 		if (!empty($trimestre) && $trimestre != '-') 
 			$sqlTrimestre = " and te.tipexa_id = ".$trimestre;
 		$sqlNivel = " and m.mat_nivel = ".$nivel;
+		$sqlEstablecimiento = " and e.est_id = 99";
 		$sql = <<<EOQ
-select n.not_id, i.ins_per_lectivo as periodo, n.not_nota, te.tipexa_descripcion, m.mat_descripcion, m.mat_curso
+select n.not_id, i.ins_per_lectivo as periodo, n.not_nota, te.tipexa_descripcion, 
+m.mat_id, m.mat_descripcion, m.mat_curso, e.est_id, e.est_nombre
 from nota n
  join tipo_examenes te on te.tipexa_id = n.tipexa_id 
   join docente_matplan dmp on dmp.docmatplan_id = n.docmatplan_id
    join materia_plan mp on mp.matplan_id = dmp.matplan_id
    join materia m on m.mat_id = mp.mat_id 
  join inscripcion i on i.ins_id = n.ins_id
+   join oferta_academica oa on oa.ofac_id = i.ofac_id
+   join establecimiento e on e.est_id = oa.est_id    
 where 1=1 
  {$sqlNivel}
  {$sqlPeriodo}
- {$sqlAula}
+ {$sqlItem}
  {$sqlTrimestre}
+ {$sqlEstablecimiento}
  order by m.mat_descripcion desc
 EOQ;
 		return $this->ejecutasql($sql);
@@ -74,6 +96,11 @@ select cur_id as id, concat(cur_descripcion,'{$etiqueta}') as name from cursos
 where  {$qsqlNivel}
 order by cur_descripcion
 EOQ;
+		return $this->ejecutasql($qsql);
+	}
+	public function getAllEstablecimientos()
+	{
+		$qsql = "select est_id as id, est_nombre as name from establecimiento order by est_nombre";
 		return $this->ejecutasql($qsql);
 	}
 	
