@@ -27,7 +27,12 @@ class Ind_rendimiento extends CI_Controller {
         $periodo=$_POST['periodo_lectivo'];
         $aula=$_POST['curso']; // realmente es un item
         $trimestre=$_POST['trimestre'];
-        $nivel=$_POST['nivel'];        
+        $nivel=$_POST['nivel']; 
+        if($nivel == 3) // parche para reutilizar en rol de supervisor
+            {
+                $nivel = 1;
+                $aula = "-";
+            }
         $establecimiento=$_POST['establecimiento'];
 
         $data['totalRegistros'] = $this->Ind_rendimientoModel->totalRegistros($periodo, $aula, $trimestre, $nivel, $establecimiento);
@@ -135,24 +140,26 @@ class Ind_rendimiento extends CI_Controller {
         switch ($nivel) {
             case 1:
                 $data['titulo'] = "Director - Nivel Primario";
-                $data['item'] = "Grado";
+                $data['item'] = "Grado: ";
                 $data['todos'] = "Todos los grados";
                 $data['cursos'] = $this->Ind_rendimientoModel->getAllClassroom($nivel);  
                 $nombre_establecimiento = $this->Ind_rendimientoModel->getNameEstablecimiento($establecimiento);                
-                $data['nombre_establecimiento'] = $nombre_establecimiento[0]['name'];
+                $data['nombre_establecimiento'] = "Establecimiento: ".$nombre_establecimiento[0]['name'];
                 break;
             case 2:
                 $data['titulo'] = "Director - Nivel Secundario";                
-                $data['item'] = "Curso";
+                $data['item'] = "Curso: ";
                 $data['todos'] = "Todos los cursos";
                 $data['cursos'] = $this->Ind_rendimientoModel->getAllClassroom($nivel);
                 $nombre_establecimiento = $this->Ind_rendimientoModel->getNameEstablecimiento($establecimiento);                
-                $data['nombre_establecimiento'] = $nombre_establecimiento[0]['name'];
+                $data['nombre_establecimiento'] = "Establecimiento: ".$nombre_establecimiento[0]['name'];
                 break;
             case 3:
                 $data['titulo'] = "Supervisor - Nivel Primario";
-                $data['item'] = "Establecimiento";
+                $data['item'] = "Establecimiento: ";
+                $data['todos'] = "Elija un Establecimiento";
                 $data['cursos'] = $this->Ind_rendimientoModel->getAllEstablecimientos();
+                $data['nombre_establecimiento'] = "";
                 break;
             
             default:

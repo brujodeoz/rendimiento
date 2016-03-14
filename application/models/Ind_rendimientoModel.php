@@ -51,17 +51,20 @@ EOQ;
 			if (!empty($item) && $item != '-') 
 				$sqlItem = " and m.mat_curso = ".$item;
 			if ($nivel == 3)
-				/*if (!empty($item) && $item != '-') */
 				{
-					$sqlItem = "  and e.est_id = ".$item;
-					$nivel = 1; 
+					//$sqlItem = "  and e.est_id = ".$item;
+					//$nivel = 1; 
 				}
 
 		if (!empty($trimestre) && $trimestre != '-') 
 			$sqlTrimestre = " and te.tipexa_id = ".$trimestre;
-		$sqlNivel = " and m.mat_nivel = ".$nivel;
+
+		if (!empty($nivel) && $nivel != '-') 
+			$sqlNivel = " and m.mat_nivel = ".$nivel;
+
 		if (!empty($establecimiento) && $establecimiento != '-') 
-		$sqlEstablecimiento = " and e.est_id = ".$establecimiento;
+			$sqlEstablecimiento = " and e.est_id = ".$establecimiento;
+
 		$sql = <<<EOQ
 select n.not_id, i.ins_per_lectivo as periodo, n.not_nota, te.tipexa_descripcion, 
 m.mat_id, m.mat_descripcion, m.mat_curso, e.est_id, e.est_nombre
