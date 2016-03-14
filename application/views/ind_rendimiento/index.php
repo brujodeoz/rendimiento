@@ -29,7 +29,9 @@
 <body>
 <div class="row">
     <div class="col-md-12">
-        <h3>Módulo Indicador de Rendimiento Escolar - <?php echo $titulo?></h3>
+        <h2>Módulo Indicador de Rendimiento Escolar<h2>
+        <h3> Establecimiento: <?php echo $nombre_establecimiento ?> </h3>
+        <h3> <?php echo $titulo?> <h3>
     </div>
 </div>
 
@@ -53,7 +55,7 @@
                         <div class="form-group">
                             <label for="selectCurse"> <?php echo $item?>: </label>
                             <select class="form-control" id="select_curso">
-                            
+                                <option value="-"><?php echo $todos?></option>
                                 <?php
                                 foreach ($cursos as $value) {
                                     ?>
@@ -76,6 +78,7 @@
                             </select>
                         </div>
                         <input type="hidden" value="<?php echo $nivel; ?>" id="select_nivel">
+                        <input type="hidden" value="<?php echo $establecimiento; ?>" id="select_establecimiento">                        
                         <div class="form-group">
                             <button id="generar_grafico" class="btn btn-default">Generar Gr&aacute;fico</button>
 
@@ -148,6 +151,7 @@
             dataFilter.trimestre       = $('#select_trimestre').val(); 
             dataFilter.curso           = $('#select_curso').val(); 
             dataFilter.nivel           = $('#select_nivel').val();
+            dataFilter.establecimiento = $('#select_establecimiento').val();
             var dataValues = {};
 
             $.ajax({

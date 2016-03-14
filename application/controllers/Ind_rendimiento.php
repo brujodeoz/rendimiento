@@ -10,11 +10,12 @@ class Ind_rendimiento extends CI_Controller {
         $this->load->helper('url');
     }
 
-    function index($nivel = 1)
+    function index($nivel = 1, $establecimiento = 99)    
     {
         $data = array();
+        $data['establecimiento'] = $establecimiento;
         $data['nivel'] = $nivel;
-        $this->generaEtiquetas($data, $nivel);
+        $this->generaEtiquetas($data, $nivel, $establecimiento);
         $data['periodos'] = $this->Ind_rendimientoModel->getAllPeriods(); 
         $data['trimestres'] = $this->Ind_rendimientoModel->getAllTrimestres(); 
         
@@ -26,9 +27,10 @@ class Ind_rendimiento extends CI_Controller {
         $periodo=$_POST['periodo_lectivo'];
         $aula=$_POST['curso']; // realmente es un item
         $trimestre=$_POST['trimestre'];
-        $nivel=$_POST['nivel'];
+        $nivel=$_POST['nivel'];        
+        $establecimiento=$_POST['establecimiento'];
 
-        $data['totalRegistros'] = $this->Ind_rendimientoModel->totalRegistros($periodo, $aula, $trimestre, $nivel);
+        $data['totalRegistros'] = $this->Ind_rendimientoModel->totalRegistros($periodo, $aula, $trimestre, $nivel, $establecimiento);
         $materias = $this->Ind_rendimientoModel->getAllMaterias($aula, $nivel);
         $total = 0; 
         $RegValuesGraph = $this->getValuesByMaterias($data['totalRegistros'], $materias, $total, $nivel);
@@ -77,12 +79,12 @@ class Ind_rendimiento extends CI_Controller {
         $temporal = $this->filtroMaterias($RendimientoMaterias, $nivel);
         return $temporal;
     }
+
+    public function getPercentByMaterias($RegValuesGraph, $total, &$result)
 /*
 * Cargo el arreglo $result, con los porcentajes a graficar junto con los nombres
-* de las materias. Este array es devuelto con JSON para facilitar la lectura
-* en el index.php (encargado de graficar)
-*/
-    public function getPercentByMaterias($RegValuesGraph, $total, &$result)
+* de las materias.
+*/    
     {
         foreach ($RegValuesGraph as $key => $value) 
         {
@@ -103,9 +105,9 @@ class Ind_rendimiento extends CI_Controller {
 * Tambien se descartan las materias que no contienen valores (criticos/riesgo)
 */
         $aux = array();
-        if($nivel == 2)
+        if($nivel == 1)
             $materiasporfiltrar = array('LENGUA', 'MATEMATICA', 'CIENCIAS NATURALES', 'CIENCIAS SOCIALES');
-        else if($nivel == 1)
+        else if($nivel == 2)
         {
             foreach ($RendimientoMaterias as $key => $value) 
             {
@@ -115,6 +117,7 @@ class Ind_rendimiento extends CI_Controller {
             array_multisort($vecPromedio, SORT_DESC, $materiasporfiltrar);
             array_splice($materiasporfiltrar, 5);
         }
+
         foreach ($RendimientoMaterias as $key => $value) 
             if(in_array($value['Materia'], $materiasporfiltrar))
             {
@@ -127,22 +130,28 @@ class Ind_rendimiento extends CI_Controller {
         return $aux;
     }
 
-    public function generaEtiquetas(&$data, $nivel)
+    public function generaEtiquetas(&$data, $nivel, $establecimiento)
     {
         switch ($nivel) {
             case 1:
-                $data['titulo'] = "Nivel Primario";
+                $data['titulo'] = "Director - Nivel Primario";
                 $data['item'] = "Grado";
-                $data['cursos'] = $this->Ind_rendimientoModel->getAllClassroom($nivel);
+                $data['todos'] = "Todos los grados";
+                $data['cursos'] = $this->Ind_rendimientoModel->getAllClassroom($nivel);  
+                $nombre_establecimiento = $this->Ind_rendimientoModel->getNameEstablecimiento($establecimiento);                
+                $data['nombre_establecimiento'] = $nombre_establecimiento[0]['name'];
                 break;
             case 2:
-                $data['titulo'] = "Nivel Secundario";                
+                $data['titulo'] = "Director - Nivel Secundario";                
                 $data['item'] = "Curso";
+                $data['todos'] = "Todos los cursos";
                 $data['cursos'] = $this->Ind_rendimientoModel->getAllClassroom($nivel);
+                $nombre_establecimiento = $this->Ind_rendimientoModel->getNameEstablecimiento($establecimiento);                
+                $data['nombre_establecimiento'] = $nombre_establecimiento[0]['name'];
                 break;
             case 3:
                 $data['titulo'] = "Supervisor - Nivel Primario";
-                $data['item'] = "Establecimiento";                
+                $data['item'] = "Establecimiento";
                 $data['cursos'] = $this->Ind_rendimientoModel->getAllEstablecimientos();
                 break;
             

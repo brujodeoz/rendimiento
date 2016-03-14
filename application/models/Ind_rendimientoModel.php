@@ -15,6 +15,7 @@ Class Ind_rendimientoModel extends CI_Model
 
 	public function getAllMaterias($curso, $nivel)
 	{
+		$sqlCurso = "";
 		if($nivel == 3)
 		{
 		$sqlCurso = "";
@@ -22,8 +23,9 @@ Class Ind_rendimientoModel extends CI_Model
 		}
 		else
 		{
-		$sqlCurso = "and mat_curso = ".$curso;
-		$sqlNivel = "and mat_nivel = ".$nivel;
+			if (!empty($curso) && $curso != '-') 
+				$sqlCurso = "and mat_curso = ".$curso;
+			$sqlNivel = "and mat_nivel = ".$nivel;
 		}
 		$qsql = <<<EOQ
 select mat_id as id, mat_descripcion as name from materia 
@@ -35,11 +37,12 @@ EOQ;
 		return $this->ejecutasql($qsql);
 	}
 	
-	public function totalRegistros($periodo, $item, $trimestre, $nivel)
+	public function totalRegistros($periodo, $item, $trimestre, $nivel, $establecimiento)
 	{		
 		$sqlPeriodo = "";
 		$sqlItem = "";
 		$sqlTrimestre = "";
+		$sqlEstablecimiento = "";
 
 		if (!empty($periodo) && $periodo != '-') 
 			$sqlPeriodo = " and i.ins_per_lectivo = ".$periodo;
@@ -57,7 +60,8 @@ EOQ;
 		if (!empty($trimestre) && $trimestre != '-') 
 			$sqlTrimestre = " and te.tipexa_id = ".$trimestre;
 		$sqlNivel = " and m.mat_nivel = ".$nivel;
-		$sqlEstablecimiento = " and e.est_id = 99";
+		if (!empty($establecimiento) && $establecimiento != '-') 
+		$sqlEstablecimiento = " and e.est_id = ".$establecimiento;
 		$sql = <<<EOQ
 select n.not_id, i.ins_per_lectivo as periodo, n.not_nota, te.tipexa_descripcion, 
 m.mat_id, m.mat_descripcion, m.mat_curso, e.est_id, e.est_nombre
@@ -109,5 +113,9 @@ EOQ;
 		$qsql = "select tipexa_id as id, tipexa_descripcion as name from tipo_examenes where tipexa_descripcion in ('3º TRIMESTRE','2º TRIMESTRE','1º TRIMESTRE') order by tipexa_descripcion";
 		return $this->ejecutasql($qsql);		
 	}
-
+	public function getNameEstablecimiento($establecimiento)
+	{
+		$qsql = "select est_nombre as name from establecimiento where est_id = ".$establecimiento;
+		return $this->ejecutasql($qsql);
+	}
 }
